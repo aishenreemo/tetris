@@ -1,11 +1,10 @@
 array_width = 65
-attr_fn_like_width = 60
+attr_fn_like_width = 70
 chain_width = 60
 edition = "2018"
-fn_args_layout = "Vertical" # Tall, Compressed, Vertical
-fn_call_width = 50
+fn_call_width = 70
 match_block_trailing_comma = true
-max_width = 95
+max_width = 100
 newline_style = "Native" # Unix, Windows, Auto, Native
 reorder_imports = false
 reorder_modules = false
