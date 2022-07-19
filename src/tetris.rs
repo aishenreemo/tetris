@@ -33,7 +33,7 @@ impl Tetris {
 
 impl Default for Tetris {
     fn default() -> Self {
-        let settings = Settings::new();
+        let settings = Settings::default();
         Self {
             layout: Box::new(TetrisDisplay::init(&settings)),
             settings,
@@ -45,8 +45,8 @@ pub struct Settings {
     pub window_size: (u32, u32),
 }
 
-impl Settings {
-    pub fn new() -> Self {
+impl Default for Settings {
+    fn default() -> Self {
         Self {
             window_size: (500, 700),
         }
