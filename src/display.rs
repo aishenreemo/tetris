@@ -70,4 +70,32 @@ impl Draw for TetrisDisplay {
         canvas.present();
         Ok(())
     }
+
+    fn update(&mut self, settings: &Settings) {
+        let (window_width, window_height) = settings.window_size;
+
+        let pwidth = |percentage: f32| window_width as f32 * percentage;
+        let pheight = |percentage: f32| window_height as f32 * percentage;
+
+        self.main.set_width(pwidth(0.5) as u32);
+        self.main.set_height(pwidth(0.7) as u32);
+        self.main
+            .center_on((pwidth(0.3) as i32, pheight(0.4) as i32));
+
+        let cell_width = self.main.width() as f32 / 10.0;
+        let cell_height = self.main.height() as f32 / 20.0;
+        let cell_center = (cell_width / 2.0, cell_height / 2.0);
+
+        for (row, cell_row) in self.cells.iter_mut().enumerate() {
+            for (column, cell) in cell_row.iter_mut().enumerate() {
+                cell.set_width((cell_width * 0.9) as u32);
+                cell.set_height((cell_height * 0.9) as u32);
+
+                cell.center_on((
+                    self.main.x() + (column as f32 * cell_width) as i32 + cell_center.0 as i32,
+                    self.main.y() + (row as f32 * cell_height) as i32 + cell_center.1 as i32,
+                ));
+            }
+        }
+    }
 }

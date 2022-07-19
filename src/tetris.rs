@@ -13,28 +13,31 @@ pub trait Draw {
 
         Ok(())
     }
+
+    fn update(&mut self, settings: &Settings);
 }
 
 pub struct Tetris {
-    pub layout: LayoutManager,
+    pub layout: Box<dyn Draw>,
     pub settings: Settings,
+}
+
+impl Tetris {
+    pub fn update_scale(&mut self, canvas: &WindowCanvas) -> crate::R {
+        self.settings.window_size = canvas.output_size()?;
+        self.layout.update(&self.settings);
+
+        Ok(())
+    }
 }
 
 impl Default for Tetris {
     fn default() -> Self {
         let settings = Settings::new();
         Self {
-            layout: LayoutManager::new(&settings),
+            layout: Box::new(TetrisDisplay::init(&settings)),
             settings,
         }
-    }
-}
-
-pub struct LayoutManager(pub Box<dyn Draw>);
-
-impl LayoutManager {
-    pub fn new(settings: &Settings) -> Self {
-        Self(Box::new(TetrisDisplay::init(settings)))
     }
 }
 

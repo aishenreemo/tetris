@@ -93,7 +93,7 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
     while let Some(cmd) = messenger.commands.pop() {
         match cmd {
             Command::Quit => std::process::exit(0),
-            Command::Resize => game.settings.window_size = canvas.output_size()?,
+            Command::Resize => game.update_scale(canvas)?,
         }
     }
 
@@ -101,5 +101,5 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
 }
 
 fn render(canvas: &mut WindowCanvas, game: &Tetris) -> R {
-    game.layout.0.draw(canvas)
+    game.layout.draw(canvas)
 }
