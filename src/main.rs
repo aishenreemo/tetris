@@ -97,9 +97,11 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
         }
     }
 
+    game.update();
+
     Ok(())
 }
 
 fn render(canvas: &mut WindowCanvas, game: &Tetris) -> R {
-    game.layout.draw(canvas)
+    game.layout.borrow().draw(game, canvas)
 }

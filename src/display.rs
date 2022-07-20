@@ -4,8 +4,9 @@ use sdl2::pixels::Color;
 use sdl2::rect::Rect;
 
 use crate::tetris;
-use tetris::Draw;
 use tetris::Settings;
+use tetris::Tetris;
+use tetris::Draw;
 
 use crate::R;
 
@@ -54,16 +55,22 @@ impl TetrisDisplay {
 }
 
 impl Draw for TetrisDisplay {
-    fn draw(&self, canvas: &mut WindowCanvas) -> R {
+    fn draw(&self, game: &Tetris, canvas: &mut WindowCanvas) -> R {
         canvas.set_draw_color(Color::BLACK);
         canvas.clear();
 
         canvas.set_draw_color(Color::GREY);
         canvas.draw_rect(self.main)?;
 
-        for cell_row in self.cells.into_iter() {
-            for cell in cell_row.into_iter() {
-                canvas.draw_rect(cell)?;
+        for (row, cell_row) in self.cells.into_iter().enumerate() {
+            for (column, cell) in cell_row.into_iter().enumerate() {
+                if game.is_occupied([column as i32, row as i32]) {
+                    canvas.set_draw_color(Color::RED);
+                    canvas.fill_rect(cell)?;
+                } else {
+                    canvas.set_draw_color(Color::GREY);
+                    canvas.draw_rect(cell)?;
+                }
             }
         }
 
@@ -71,8 +78,8 @@ impl Draw for TetrisDisplay {
         Ok(())
     }
 
-    fn update(&mut self, settings: &Settings) {
-        let (window_width, window_height) = settings.window_size;
+    fn update(&mut self, game: &Tetris) {
+        let (window_width, window_height) = game.settings.window_size;
 
         let pwidth = |percentage: f32| window_width as f32 * percentage;
         let pheight = |percentage: f32| window_height as f32 * percentage;
