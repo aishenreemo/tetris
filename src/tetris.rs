@@ -2,6 +2,10 @@ extern crate sdl2;
 use sdl2::render::WindowCanvas;
 use sdl2::pixels::Color;
 
+extern crate rand;
+use rand::Rng;
+use rand::rngs::ThreadRng;
+
 use crate::display;
 use display::TetrisDisplay;
 
@@ -29,6 +33,7 @@ pub struct Tetris {
     pub last_update: SystemTime,
     pub settings: Settings,
     pub minos: Vec<Mino>,
+    pub rng: ThreadRng,
 }
 
 impl Tetris {
@@ -37,7 +42,7 @@ impl Tetris {
             // if all of other minos are locked
             if self.minos.iter().all(|v| v.locked) {
                 // generate a mino
-                self.minos.extend(Mino::generate(MinoType::O));
+                self.minos.extend(Mino::generate(&mut self.rng));
             }
 
             // lock it or move it
@@ -118,11 +123,13 @@ impl Tetris {
 impl Default for Tetris {
     fn default() -> Self {
         let settings = Settings::default();
+        let mut rng = rand::thread_rng();
         Self {
             layout: Box::new(RefCell::new(TetrisDisplay::init(&settings))),
-            minos: Mino::generate(MinoType::O),
             last_update: SystemTime::now(),
+            minos: Mino::generate(&mut rng),
             settings,
+            rng,
         }
     }
 }
@@ -134,23 +141,72 @@ pub struct Mino {
 }
 
 impl Mino {
-    pub fn generate(mino_type: MinoType) -> Vec<Mino> {
-        match mino_type {
+    pub fn generate(rng: &mut ThreadRng) -> Vec<Mino> {
+        let mino_types = [
+            MinoType::O,
+            MinoType::I,
+            MinoType::Z,
+            MinoType::S,
+            MinoType::J,
+            MinoType::L,
+        ];
+
+        match mino_types[rng.gen_range(0..6)] {
             MinoType::O => [
+                ([4, -1], MinoType::O),
+                ([5, -1], MinoType::O),
                 ([4, 0], MinoType::O),
                 ([5, 0], MinoType::O),
-                ([4, 1], MinoType::O),
-                ([5, 1], MinoType::O),
             ]
             .into_iter()
             .map(|v| v.into())
             .collect(),
 
-            _ => [
-                ([4, 0], MinoType::O),
-                ([5, 0], MinoType::O),
-                ([4, 1], MinoType::O),
-                ([5, 1], MinoType::O),
+            MinoType::I => [
+                ([3, -1], MinoType::I),
+                ([4, -1], MinoType::I),
+                ([5, -1], MinoType::I),
+                ([6, -1], MinoType::I),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+
+            MinoType::S => [
+                ([4, -1], MinoType::S),
+                ([4, 0], MinoType::S),
+                ([5, 0], MinoType::S),
+                ([5, 1], MinoType::S),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+
+            MinoType::Z => [
+                ([5, -1], MinoType::Z),
+                ([5, 0], MinoType::Z),
+                ([4, 0], MinoType::Z),
+                ([4, 1], MinoType::Z),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+
+            MinoType::J => [
+                ([4, -1], MinoType::J),
+                ([5, -1], MinoType::J),
+                ([6, -1], MinoType::J),
+                ([6, 0], MinoType::J),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+
+            MinoType::L => [
+                ([4, 0], MinoType::L),
+                ([4, -1], MinoType::L),
+                ([5, -1], MinoType::L),
+                ([6, -1], MinoType::L),
             ]
             .into_iter()
             .map(|v| v.into())
