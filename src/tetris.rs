@@ -31,6 +31,7 @@ pub struct Tetris {
 pub struct Mino {
     pub position: [i32; 2],
     pub mino_type: MinoType,
+    pub locked: bool,
 }
 
 impl From<([i32; 2], MinoType)> for Mino {
@@ -38,6 +39,7 @@ impl From<([i32; 2], MinoType)> for Mino {
         Self {
             position: e.0,
             mino_type: e.1,
+            locked: false,
         }
     }
 }
@@ -61,7 +63,31 @@ impl Default for MinoType {
 impl Tetris {
     pub fn update(&mut self) {
         if self.last_update.elapsed().expect("Unexpected time error.") >= self.settings.speed {
-            for mino in self.minos.iter_mut() {
+            // lock all mino as soon as it hits the floor
+            for mino in self.minos.iter_mut().filter(|v| !v.locked) {
+                let new_pos = [mino.position[0], mino.position[1] + 1];
+
+                if Tetris::is_outside(new_pos) {
+                    mino.locked = true;
+                }
+            }
+
+            // lock all mino as soon as it another locked mino
+            let mut minos_to_locked = vec![];
+            for (i, mino) in self.minos.iter().enumerate().filter(|&(_, v)| !v.locked) {
+                let new_pos = [mino.position[0], mino.position[1] + 1];
+
+                if self.is_occupied_and_locked(new_pos) {
+                    minos_to_locked.push(i);
+                }
+            }
+
+            for i in minos_to_locked.into_iter() {
+                self.minos[i].locked = true;
+            }
+
+            // move all minos down if they not locked yet
+            for mino in self.minos.iter_mut().filter(|v| !v.locked) {
                 mino.position[1] += 1;
             }
 
@@ -78,6 +104,16 @@ impl Tetris {
 
     pub fn is_occupied(&self, position: [i32; 2]) -> bool {
         self.minos.iter().any(|m| m.position == position)
+    }
+
+    pub fn is_occupied_and_locked(&self, position: [i32; 2]) -> bool {
+        self.minos
+            .iter()
+            .any(|m| m.position == position && m.locked)
+    }
+
+    pub fn is_outside(position: [i32; 2]) -> bool {
+        !(0..10).contains(&position[0]) || !(0..20).contains(&position[1])
     }
 }
 

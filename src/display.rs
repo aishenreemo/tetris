@@ -64,7 +64,10 @@ impl Draw for TetrisDisplay {
 
         for (row, cell_row) in self.cells.into_iter().enumerate() {
             for (column, cell) in cell_row.into_iter().enumerate() {
-                if game.is_occupied([column as i32, row as i32]) {
+                if game.is_occupied_and_locked([column as i32, row as i32]) {
+                    canvas.set_draw_color(Color::GREEN);
+                    canvas.fill_rect(cell)?;
+                } else if game.is_occupied([column as i32, row as i32]) {
                     canvas.set_draw_color(Color::RED);
                     canvas.fill_rect(cell)?;
                 } else {
