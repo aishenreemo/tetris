@@ -92,7 +92,7 @@ impl Tetris {
 
             new_pos[0] += offset;
 
-            if Tetris::is_outside(new_pos) {
+            if Tetris::is_outside(new_pos) || self.is_occupied_and_locked(new_pos) {
                 mino_to_move.clear();
                 break;
             }
