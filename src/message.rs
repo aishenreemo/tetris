@@ -36,4 +36,10 @@ impl Messenger {
 pub enum Command {
     Quit,
     Resize,
+    MoveMino(MinoDirection),
+}
+
+pub enum MinoDirection {
+    Left,
+    Right,
 }

@@ -8,6 +8,7 @@ mod tetris;
 use tetris::Tetris;
 
 pub mod message;
+use message::MinoDirection;
 use message::has_elapsed;
 use message::Messenger;
 use message::Command;
@@ -84,6 +85,12 @@ fn listen(messenger: &mut Messenger, event: Event) {
             Keycode::Escape if has_elapsed(timestamp, 500) => {
                 messenger.commands.push(Command::Quit)
             },
+            Keycode::Left => messenger
+                .commands
+                .push(Command::MoveMino(MinoDirection::Left)),
+            Keycode::Right => messenger
+                .commands
+                .push(Command::MoveMino(MinoDirection::Right)),
             _ => (),
         }
     }
@@ -94,6 +101,7 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
         match cmd {
             Command::Quit => std::process::exit(0),
             Command::Resize => game.update_scale(canvas)?,
+            Command::MoveMino(direction) => game.advance(direction),
         }
     }
 

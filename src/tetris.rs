@@ -5,6 +5,9 @@ use sdl2::pixels::Color;
 use crate::display;
 use display::TetrisDisplay;
 
+use crate::message;
+use message::MinoDirection;
+
 use std::time::SystemTime;
 use std::time::Duration;
 use std::cell::RefCell;
@@ -28,10 +31,132 @@ pub struct Tetris {
     pub minos: Vec<Mino>,
 }
 
+impl Tetris {
+    pub fn update(&mut self) {
+        if self.last_update.elapsed().expect("Unexpected time error.") >= self.settings.speed {
+            // if all of other minos are locked
+            if self.minos.iter().all(|v| v.locked) {
+                // generate a mino
+                self.minos.extend(Mino::generate(MinoType::O));
+            }
+
+            // lock it or move it
+            let mut lock = false;
+
+            for mino in self.minos.iter().filter(|v| !v.locked) {
+                let mut new_pos = mino.position;
+
+                new_pos[1] += 1;
+
+                if Tetris::is_outside(new_pos) || self.is_occupied_and_locked(new_pos) {
+                    lock = true;
+                    break;
+                }
+            }
+
+            if lock {
+                for mino in self.minos.iter_mut() {
+                    mino.locked = true;
+                }
+            } else {
+                for mino in self.minos.iter_mut().filter(|v| !v.locked) {
+                    mino.position[1] += 1;
+                }
+            }
+
+            self.last_update = SystemTime::now();
+        }
+    }
+
+    pub fn update_scale(&mut self, canvas: &WindowCanvas) -> crate::R {
+        self.settings.window_size = canvas.output_size()?;
+        self.layout.borrow_mut().update(self);
+
+        Ok(())
+    }
+
+    pub fn advance(&mut self, direction: MinoDirection) {
+        let mut mino_to_move = vec![];
+        let offset = match direction {
+            MinoDirection::Left => -1,
+            MinoDirection::Right => 1,
+        };
+
+        for (i, mino) in self.minos.iter().enumerate().filter(|&(_, v)| !v.locked) {
+            let mut new_pos = mino.position;
+
+            new_pos[0] += offset;
+
+            if Tetris::is_outside(new_pos) {
+                mino_to_move.clear();
+                break;
+            }
+
+            mino_to_move.push(i);
+        }
+
+        for i in mino_to_move.into_iter() {
+            self.minos[i].position[0] += offset;
+        }
+    }
+
+    pub fn is_occupied(&self, position: [i32; 2]) -> bool {
+        self.minos.iter().any(|m| m.position == position)
+    }
+
+    pub fn is_occupied_and_locked(&self, position: [i32; 2]) -> bool {
+        self.minos
+            .iter()
+            .any(|m| m.position == position && m.locked)
+    }
+
+    pub fn is_outside(position: [i32; 2]) -> bool {
+        !(0..10).contains(&position[0]) || !(0..20).contains(&position[1])
+    }
+}
+
+impl Default for Tetris {
+    fn default() -> Self {
+        let settings = Settings::default();
+        Self {
+            layout: Box::new(RefCell::new(TetrisDisplay::init(&settings))),
+            minos: Mino::generate(MinoType::O),
+            last_update: SystemTime::now(),
+            settings,
+        }
+    }
+}
+
 pub struct Mino {
     pub position: [i32; 2],
     pub mino_type: MinoType,
     pub locked: bool,
+}
+
+impl Mino {
+    pub fn generate(mino_type: MinoType) -> Vec<Mino> {
+        match mino_type {
+            MinoType::O => [
+                ([4, 0], MinoType::O),
+                ([5, 0], MinoType::O),
+                ([4, 1], MinoType::O),
+                ([5, 1], MinoType::O),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+
+            _ => [
+                ([4, 0], MinoType::O),
+                ([5, 0], MinoType::O),
+                ([4, 1], MinoType::O),
+                ([5, 1], MinoType::O),
+            ]
+            .into_iter()
+            .map(|v| v.into())
+            .collect(),
+        }
+    }
 }
 
 impl From<([i32; 2], MinoType)> for Mino {
@@ -57,83 +182,6 @@ pub enum MinoType {
 impl Default for MinoType {
     fn default() -> Self {
         Self::O
-    }
-}
-
-impl Tetris {
-    pub fn update(&mut self) {
-        if self.last_update.elapsed().expect("Unexpected time error.") >= self.settings.speed {
-            // lock all mino as soon as it hits the floor
-            for mino in self.minos.iter_mut().filter(|v| !v.locked) {
-                let new_pos = [mino.position[0], mino.position[1] + 1];
-
-                if Tetris::is_outside(new_pos) {
-                    mino.locked = true;
-                }
-            }
-
-            // lock all mino as soon as it another locked mino
-            let mut minos_to_locked = vec![];
-            for (i, mino) in self.minos.iter().enumerate().filter(|&(_, v)| !v.locked) {
-                let new_pos = [mino.position[0], mino.position[1] + 1];
-
-                if self.is_occupied_and_locked(new_pos) {
-                    minos_to_locked.push(i);
-                }
-            }
-
-            for i in minos_to_locked.into_iter() {
-                self.minos[i].locked = true;
-            }
-
-            // move all minos down if they not locked yet
-            for mino in self.minos.iter_mut().filter(|v| !v.locked) {
-                mino.position[1] += 1;
-            }
-
-            self.last_update = SystemTime::now();
-        }
-    }
-
-    pub fn update_scale(&mut self, canvas: &WindowCanvas) -> crate::R {
-        self.settings.window_size = canvas.output_size()?;
-        self.layout.borrow_mut().update(self);
-
-        Ok(())
-    }
-
-    pub fn is_occupied(&self, position: [i32; 2]) -> bool {
-        self.minos.iter().any(|m| m.position == position)
-    }
-
-    pub fn is_occupied_and_locked(&self, position: [i32; 2]) -> bool {
-        self.minos
-            .iter()
-            .any(|m| m.position == position && m.locked)
-    }
-
-    pub fn is_outside(position: [i32; 2]) -> bool {
-        !(0..10).contains(&position[0]) || !(0..20).contains(&position[1])
-    }
-}
-
-impl Default for Tetris {
-    fn default() -> Self {
-        let settings = Settings::default();
-        Self {
-            layout: Box::new(RefCell::new(TetrisDisplay::init(&settings))),
-            last_update: SystemTime::now(),
-            settings,
-            minos: [
-                ([4, 0], MinoType::O),
-                ([5, 0], MinoType::O),
-                ([4, 1], MinoType::O),
-                ([5, 1], MinoType::O),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
-        }
     }
 }
 
