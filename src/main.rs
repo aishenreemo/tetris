@@ -33,7 +33,9 @@ fn main() -> R {
         .build()
         .expect("Couldn't initialize window.");
 
+    // handles input
     let mut messenger = Messenger::default();
+
     let mut canvas = window
         .into_canvas()
         .build()
@@ -43,6 +45,7 @@ fn main() -> R {
 
     // traditional game loop
     loop {
+        // convert input to a command
         for event in event_pump.poll_iter() {
             listen(&mut messenger, event);
         }
@@ -99,13 +102,18 @@ fn listen(messenger: &mut Messenger, event: Event) {
 fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -> R {
     while let Some(cmd) = messenger.commands.pop() {
         match cmd {
+            // exit the game
             Command::Quit => std::process::exit(0),
+            // update scale ui of the game
             Command::Resize => game.update_scale(canvas)?,
+            // go left or right
             Command::MoveMino(direction) => game.advance(direction),
         }
     }
 
-    game.update();
+    if game.last_update.elapsed().expect("Unexpected time error.") >= game.settings.speed {
+        game.update();
+    }
 
     Ok(())
 }

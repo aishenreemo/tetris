@@ -38,39 +38,28 @@ pub struct Tetris {
 
 impl Tetris {
     pub fn update(&mut self) {
-        if self.last_update.elapsed().expect("Unexpected time error.") >= self.settings.speed {
-            // if all of other minos are locked
-            if self.minos.iter().all(|v| v.locked) {
-                // generate a mino
-                self.minos.extend(Mino::generate(&mut self.rng));
-            }
-
-            // lock it or move it
-            let mut lock = false;
-
-            for mino in self.minos.iter().filter(|v| !v.locked) {
-                let mut new_pos = mino.position;
-
-                new_pos[1] += 1;
-
-                if Tetris::is_outside(new_pos) || self.is_occupied_and_locked(new_pos) {
-                    lock = true;
-                    break;
-                }
-            }
-
-            if lock {
-                for mino in self.minos.iter_mut() {
-                    mino.locked = true;
-                }
-            } else {
-                for mino in self.minos.iter_mut().filter(|v| !v.locked) {
-                    mino.position[1] += 1;
-                }
-            }
-
-            self.last_update = SystemTime::now();
+        // if all of other minos are locked
+        if self.minos.iter().all(|v| v.locked) {
+            // generate a mino
+            self.minos.extend(Mino::generate(&mut self.rng));
         }
+
+        let is_pos_valid = |m: &Mino| {
+            let peek = [m.position[0], m.position[1] + 1];
+            (self.is_outside(peek) || self.is_occupied_and_locked(peek)) && !m.locked
+        };
+
+        // move it or lock it
+        if !self.minos.iter().any(is_pos_valid) {
+            self.minos
+                .iter_mut()
+                .filter(|m| !m.locked)
+                .for_each(|m| m.position[1] += 1)
+        } else {
+            self.minos.iter_mut().for_each(|m| m.locked = true);
+        }
+
+        self.last_update = SystemTime::now();
     }
 
     pub fn update_scale(&mut self, canvas: &WindowCanvas) -> crate::R {
@@ -81,27 +70,21 @@ impl Tetris {
     }
 
     pub fn advance(&mut self, direction: MinoDirection) {
-        let mut mino_to_move = vec![];
         let offset = match direction {
             MinoDirection::Left => -1,
             MinoDirection::Right => 1,
         };
 
-        for (i, mino) in self.minos.iter().enumerate().filter(|&(_, v)| !v.locked) {
-            let mut new_pos = mino.position;
+        let is_pos_valid = |m: &Mino| {
+            let peek = [m.position[0] + offset, m.position[1]];
+            (self.is_outside(peek) || self.is_occupied_and_locked(peek)) && !m.locked
+        };
 
-            new_pos[0] += offset;
-
-            if Tetris::is_outside(new_pos) || self.is_occupied_and_locked(new_pos) {
-                mino_to_move.clear();
-                break;
-            }
-
-            mino_to_move.push(i);
-        }
-
-        for i in mino_to_move.into_iter() {
-            self.minos[i].position[0] += offset;
+        if !self.minos.iter().any(is_pos_valid) {
+            self.minos
+                .iter_mut()
+                .filter(|m| !m.locked)
+                .for_each(|m| m.position[0] += offset)
         }
     }
 
@@ -115,7 +98,7 @@ impl Tetris {
             .any(|m| m.position == position && m.locked)
     }
 
-    pub fn is_outside(position: [i32; 2]) -> bool {
+    pub fn is_outside(&self, position: [i32; 2]) -> bool {
         !(0..10).contains(&position[0]) || !(0..20).contains(&position[1])
     }
 }
@@ -151,67 +134,18 @@ impl Mino {
             MinoType::L,
         ];
 
-        match mino_types[rng.gen_range(0..6)] {
-            MinoType::O => [
-                ([4, -1], MinoType::O),
-                ([5, -1], MinoType::O),
-                ([4, 0], MinoType::O),
-                ([5, 0], MinoType::O),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
+        let mino_type = mino_types[rng.gen_range(0..6)];
 
-            MinoType::I => [
-                ([3, -1], MinoType::I),
-                ([4, -1], MinoType::I),
-                ([5, -1], MinoType::I),
-                ([6, -1], MinoType::I),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
+        let minos = match mino_types[rng.gen_range(0..6)] {
+            MinoType::O => [[4, -1], [5, -1], [4, 0], [5, 0]],
+            MinoType::I => [[3, -1], [4, -1], [5, -1], [6, -1]],
+            MinoType::S => [[4, -1], [4, 0], [5, 0], [5, 1]],
+            MinoType::Z => [[5, -1], [5, 0], [4, 0], [4, 1]],
+            MinoType::J => [[4, -1], [5, -1], [6, -1], [6, 0]],
+            MinoType::L => [[4, 0], [4, -1], [5, -1], [6, -1]],
+        };
 
-            MinoType::S => [
-                ([4, -1], MinoType::S),
-                ([4, 0], MinoType::S),
-                ([5, 0], MinoType::S),
-                ([5, 1], MinoType::S),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
-
-            MinoType::Z => [
-                ([5, -1], MinoType::Z),
-                ([5, 0], MinoType::Z),
-                ([4, 0], MinoType::Z),
-                ([4, 1], MinoType::Z),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
-
-            MinoType::J => [
-                ([4, -1], MinoType::J),
-                ([5, -1], MinoType::J),
-                ([6, -1], MinoType::J),
-                ([6, 0], MinoType::J),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
-
-            MinoType::L => [
-                ([4, 0], MinoType::L),
-                ([4, -1], MinoType::L),
-                ([5, -1], MinoType::L),
-                ([6, -1], MinoType::L),
-            ]
-            .into_iter()
-            .map(|v| v.into())
-            .collect(),
-        }
+        minos.into_iter().map(|v| (v, mino_type).into()).collect()
     }
 }
 
@@ -225,7 +159,7 @@ impl From<([i32; 2], MinoType)> for Mino {
     }
 }
 
-#[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub enum MinoType {
     O,
     S,
