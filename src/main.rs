@@ -15,6 +15,7 @@ use message::Command;
 
 pub mod display;
 
+use std::time::SystemTime;
 use std::time::Duration;
 use std::thread;
 
@@ -25,7 +26,7 @@ fn main() -> R {
     let video_subsystem = sdl_context.video()?;
 
     let mut game = Tetris::default();
-    let (width, height) = game.settings.window_size;
+    let (width, height) = game.cfg.window_size;
 
     let window = video_subsystem
         .window("tetris", width, height)
@@ -72,30 +73,25 @@ fn listen(messenger: &mut Messenger, event: Event) {
     match event {
         // Ctrl + C in the terminal
         Event::Quit { timestamp: _ } => messenger.commands.push(Command::Quit),
-        Event::KeyDown { keycode, .. } => messenger.key_hold(keycode.unwrap()),
+        // releasing a key
         Event::KeyUp { keycode, .. } => messenger.key_release(keycode.unwrap()),
+        // holding a key
+        Event::KeyDown { keycode, .. } => {
+            messenger.key_hold(keycode.unwrap());
+            press_key(&mut messenger.commands, &keycode.unwrap());
+        },
+
         // if you resize the window
         Event::Window {
             win_event: WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _),
             ..
         } => messenger.commands.push(Command::Resize),
+
         _ => (),
     }
 
-    // if you hold a key(e.g Escape key) more than the given milliseconds
-    for (key, timestamp) in messenger.onhold.iter() {
-        match key {
-            Keycode::Escape if has_elapsed(timestamp, 500) => {
-                messenger.commands.push(Command::Quit)
-            },
-            Keycode::Left => messenger
-                .commands
-                .push(Command::MoveMino(MinoDirection::Left)),
-            Keycode::Right => messenger
-                .commands
-                .push(Command::MoveMino(MinoDirection::Right)),
-            _ => (),
-        }
+    for (key, timestamp) in messenger.onhold.iter_mut() {
+        hold_key(&mut messenger.commands, key, timestamp);
     }
 }
 
@@ -107,11 +103,11 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
             // update scale ui of the game
             Command::Resize => game.update_scale(canvas)?,
             // go left or right
-            Command::MoveMino(direction) => game.advance(direction),
+            Command::MoveMino(_direction) => (), //game.advance(direction),
         }
     }
 
-    if game.last_update.elapsed().expect("Unexpected time error.") >= game.settings.speed {
+    if game.last_update.elapsed().expect("Unexpected time error.") >= game.cfg.speed {
         game.update();
     }
 
@@ -120,4 +116,35 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
 
 fn render(canvas: &mut WindowCanvas, game: &Tetris) -> R {
     game.layout.borrow().draw(game, canvas)
+}
+
+fn press_key(commands: &mut Vec<Command>, keycode: &Keycode) {
+    // if you hold a key(e.g Escape key) more than the given milliseconds
+    match keycode {
+        Keycode::Left => {
+            commands.push(Command::MoveMino(MinoDirection::Left));
+        },
+        Keycode::Right => {
+            commands.push(Command::MoveMino(MinoDirection::Right));
+        },
+        _ => (),
+    }
+}
+
+fn hold_key(commands: &mut Vec<Command>, keycode: &Keycode, timestamp: &mut SystemTime) {
+    // if you hold a key(e.g Escape key) more than the given milliseconds
+    match keycode {
+        Keycode::Escape if has_elapsed(timestamp, 500) => {
+            commands.push(Command::Quit);
+        },
+        Keycode::Left if has_elapsed(timestamp, 100) => {
+            commands.push(Command::MoveMino(MinoDirection::Left));
+            *timestamp = SystemTime::now();
+        },
+        Keycode::Right if has_elapsed(timestamp, 100) => {
+            commands.push(Command::MoveMino(MinoDirection::Right));
+            *timestamp = SystemTime::now();
+        },
+        _ => (),
+    }
 }
