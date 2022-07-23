@@ -1,4 +1,4 @@
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 #[allow(dead_code)]
 pub struct Mino {
     pub locked: bool,

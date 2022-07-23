@@ -75,7 +75,13 @@ impl Tetris {
             row + 1 >= 20 || !is_locked(column, row) && is_locked(column, row + 1)
         };
 
-        if self
+        let rows_to_clear: Vec<usize> = (0..20)
+            .filter(|&r| (0..10).all(|c| is_locked(c, r)))
+            .collect();
+
+        if !rows_to_clear.is_empty() {
+            rows_to_clear.into_iter().for_each(|i| self.clear(i));
+        } else if self
             .focused_shape
             .as_ref() // Option<Shape> -> Option<&Shape>
             .unwrap() // Option<&Shape> -> &Shape
@@ -192,6 +198,20 @@ impl Tetris {
         for pos in m.mino_pos.iter_mut() {
             pos[0] = (pos[0] as i32 + offset) as usize;
             self.minos[pos[1]][pos[0]] = Some(Mino { locked: false });
+        }
+    }
+
+    fn clear(&mut self, row_index: usize) {
+        for mino in self.minos[row_index].iter_mut() {
+            *mino = None;
+        }
+
+        for row in (0..row_index).into_iter().rev() {
+            self.minos[row + 1] = self.minos[row];
+        }
+
+        for mino in self.minos[0].iter_mut() {
+            *mino = None;
         }
     }
 }
