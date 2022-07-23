@@ -9,7 +9,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             window_size: (500, 700),
-            speed: Duration::from_millis(250),
+            speed: Duration::from_millis(500),
         }
     }
 }
