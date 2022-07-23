@@ -51,6 +51,10 @@ fn main() -> R {
             listen(&mut messenger, event);
         }
 
+        for (key, timestamp) in messenger.onhold.iter_mut() {
+            hold_key(&mut messenger.commands, key, timestamp);
+        }
+
         // update game data/info
         if let Err(err) = update(&mut messenger, &mut game, &canvas) {
             eprintln!("Encountered error while updating game:\n{err:?}");
@@ -77,8 +81,8 @@ fn listen(messenger: &mut Messenger, event: Event) {
         Event::KeyUp { keycode, .. } => messenger.key_release(keycode.unwrap()),
         // holding a key
         Event::KeyDown { keycode, .. } => {
+            press_key(messenger, &keycode.unwrap());
             messenger.key_hold(keycode.unwrap());
-            press_key(&mut messenger.commands, &keycode.unwrap());
         },
 
         // if you resize the window
@@ -89,13 +93,11 @@ fn listen(messenger: &mut Messenger, event: Event) {
 
         _ => (),
     }
-
-    for (key, timestamp) in messenger.onhold.iter_mut() {
-        hold_key(&mut messenger.commands, key, timestamp);
-    }
 }
 
 fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -> R {
+    let mut stop = false;
+
     while let Some(cmd) = messenger.commands.pop() {
         match cmd {
             // exit the game
@@ -103,11 +105,11 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
             // update scale ui of the game
             Command::Resize => game.update_scale(canvas)?,
             // go left or right
-            Command::MoveMino(_direction) => (), //game.advance(direction),
+            Command::MoveMino(d) => game.request_turn(d, &mut stop),
         }
     }
 
-    if game.last_update.elapsed().expect("Unexpected time error.") >= game.cfg.speed {
+    if game.last_update.elapsed().expect("Unexpected time error.") >= game.cfg.speed && !stop {
         game.update();
     }
 
@@ -118,14 +120,18 @@ fn render(canvas: &mut WindowCanvas, game: &Tetris) -> R {
     game.layout.borrow().draw(game, canvas)
 }
 
-fn press_key(commands: &mut Vec<Command>, keycode: &Keycode) {
+fn press_key(m: &mut Messenger, keycode: &Keycode) {
+    if m.onhold.contains_key(keycode) {
+        return;
+    }
+
     // if you hold a key(e.g Escape key) more than the given milliseconds
     match keycode {
         Keycode::Left => {
-            commands.push(Command::MoveMino(MinoDirection::Left));
+            m.commands.push(Command::MoveMino(MinoDirection::Left));
         },
         Keycode::Right => {
-            commands.push(Command::MoveMino(MinoDirection::Right));
+            m.commands.push(Command::MoveMino(MinoDirection::Right));
         },
         _ => (),
     }
@@ -137,11 +143,11 @@ fn hold_key(commands: &mut Vec<Command>, keycode: &Keycode, timestamp: &mut Syst
         Keycode::Escape if has_elapsed(timestamp, 500) => {
             commands.push(Command::Quit);
         },
-        Keycode::Left if has_elapsed(timestamp, 100) => {
+        Keycode::Left if has_elapsed(timestamp, 200) => {
             commands.push(Command::MoveMino(MinoDirection::Left));
             *timestamp = SystemTime::now();
         },
-        Keycode::Right if has_elapsed(timestamp, 100) => {
+        Keycode::Right if has_elapsed(timestamp, 200) => {
             commands.push(Command::MoveMino(MinoDirection::Right));
             *timestamp = SystemTime::now();
         },

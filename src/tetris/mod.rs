@@ -17,6 +17,9 @@ use crate::display;
 use display::TetrisDisplay;
 use display::Draw;
 
+use crate::message;
+use message::MinoDirection;
+
 use std::time::SystemTime;
 use std::cell::RefCell;
 
@@ -74,15 +77,50 @@ impl Tetris {
 
         if self
             .focused_shape
-            .as_ref()
-            .unwrap()
-            .mino_pos
+            .as_ref() // Option<Shape> -> Option<&Shape>
+            .unwrap() // Option<&Shape> -> &Shape
+            .mino_pos // [[usize; 2]; 4]
             .iter()
             .any(is_colliding_down)
         {
             self.lock();
         } else {
             self.advance();
+        }
+    }
+
+    pub fn request_turn(&mut self, dir: MinoDirection, stop: &mut bool) {
+        if self.focused_shape.is_none() {
+            return; // skip
+        }
+
+        let offset = match dir {
+            MinoDirection::Left => -1,
+            MinoDirection::Right => 1,
+        };
+
+        let is_locked = |c: i32, r: i32| -> bool {
+            let (c, r) = (c as usize, r as usize);
+            self.minos[r][c].map(|m| m.locked).unwrap_or(false)
+        };
+
+        let is_colliding = |[c, r]: [i32; 2]| -> bool {
+            !(0..10).contains(&(c + offset)) || !is_locked(c, r) && is_locked(c + offset, r)
+        };
+
+        if !self
+            .focused_shape
+            .as_ref()
+            .unwrap()
+            .mino_pos
+            .iter()
+            .map(|&p| [p[0] as i32, p[1] as i32]) // [usize; 2] -> [i32; 2]
+            .any(is_colliding)
+        {
+            // prevent from updating right after this iteration
+            *stop = true;
+            // turn the focused tetromino
+            self.turn(offset);
         }
     }
 
@@ -140,6 +178,19 @@ impl Tetris {
 
         for pos in m.mino_pos.iter_mut() {
             pos[1] += 1;
+            self.minos[pos[1]][pos[0]] = Some(Mino { locked: false });
+        }
+    }
+
+    fn turn(&mut self, offset: i32) {
+        let m = self.focused_shape.as_mut().unwrap();
+
+        for &[column, row] in m.mino_pos.iter() {
+            self.minos[row][column] = None;
+        }
+
+        for pos in m.mino_pos.iter_mut() {
+            pos[0] = (pos[0] as i32 + offset) as usize;
             self.minos[pos[1]][pos[0]] = Some(Mino { locked: false });
         }
     }
