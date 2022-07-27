@@ -11,6 +11,7 @@ pub mod message;
 use message::MinoDirection;
 use message::has_elapsed;
 use message::Messenger;
+use message::Rotation;
 use message::Command;
 
 pub mod display;
@@ -106,6 +107,8 @@ fn update(messenger: &mut Messenger, game: &mut Tetris, canvas: &WindowCanvas) -
             Command::Resize => game.update_scale(canvas)?,
             // go left or right
             Command::MoveMino(d) => game.request_turn(d, &mut stop),
+            // rotate clockwise or counterclockwise
+            Command::Rotate(r) => game.request_rotate(r, &mut stop),
         }
     }
 
@@ -125,13 +128,18 @@ fn press_key(m: &mut Messenger, keycode: &Keycode) {
         return;
     }
 
-    // if you hold a key(e.g Escape key) more than the given milliseconds
     match keycode {
         Keycode::Left => {
             m.commands.push(Command::MoveMino(MinoDirection::Left));
         },
         Keycode::Right => {
             m.commands.push(Command::MoveMino(MinoDirection::Right));
+        },
+        Keycode::Q => {
+            m.commands.push(Command::Rotate(Rotation::CounterClockwise));
+        },
+        Keycode::E => {
+            m.commands.push(Command::Rotate(Rotation::Clockwise));
         },
         _ => (),
     }

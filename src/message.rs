@@ -37,9 +37,16 @@ pub enum Command {
     Quit,
     Resize,
     MoveMino(MinoDirection),
+    Rotate(Rotation),
 }
 
 pub enum MinoDirection {
     Left,
     Right,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Rotation {
+    Clockwise,
+    CounterClockwise,
 }

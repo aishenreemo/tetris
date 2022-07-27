@@ -19,6 +19,7 @@ use display::Draw;
 
 use crate::message;
 use message::MinoDirection;
+use message::Rotation;
 
 use std::time::SystemTime;
 use std::cell::RefCell;
@@ -130,6 +131,46 @@ impl Tetris {
         }
     }
 
+    pub fn request_rotate(&mut self, rot: Rotation, stop: &mut bool) {
+        if self.focused_shape.is_none() {
+            return; // skip
+        }
+
+        if self.focused_shape.as_ref().unwrap().variant == ShapeVariant::O {
+            return;
+        }
+
+        let new_pos = self.focused_shape.as_ref().unwrap().rotate(rot);
+
+        // is locked
+        let is_locked = |c: i32, r: i32| -> bool {
+            let (c, r) = (c as usize, r as usize);
+            self.minos[r][c].map(|m| m.locked).unwrap_or(false)
+        };
+
+        // collision checking
+        let is_colliding = |(i, [c, r]): (usize, [i32; 2])| -> bool {
+            let [nc, nr] = new_pos[i];
+
+            (!(0..10).contains(&nc) || !(0..20).contains(&nr))
+                || (!is_locked(c, r) && is_locked(nc, nr))
+        };
+
+        if !self
+            .focused_shape
+            .as_ref()
+            .unwrap()
+            .mino_pos
+            .iter()
+            .map(|&p| [p[0] as i32, p[1] as i32]) // [usize; 2] -> [i32; 2]
+            .enumerate()
+            .any(is_colliding)
+        {
+            *stop = true;
+            self.rotate(new_pos);
+        }
+    }
+
     fn generate(&mut self) {
         let mino_types = [
             ShapeVariant::O,
@@ -197,6 +238,20 @@ impl Tetris {
 
         for pos in m.mino_pos.iter_mut() {
             pos[0] = (pos[0] as i32 + offset) as usize;
+            self.minos[pos[1]][pos[0]] = Some(Mino { locked: false });
+        }
+    }
+
+    fn rotate(&mut self, new_pos: [[i32; 2]; 4]) {
+        let m = self.focused_shape.as_mut().unwrap();
+
+        for &[column, row] in m.mino_pos.iter() {
+            self.minos[row][column] = None;
+        }
+
+        for (i, pos) in m.mino_pos.iter_mut().enumerate() {
+            pos[0] = new_pos[i][0] as usize;
+            pos[1] = new_pos[i][1] as usize;
             self.minos[pos[1]][pos[0]] = Some(Mino { locked: false });
         }
     }
