@@ -1,8 +1,7 @@
 extern crate tetris_common;
 use tetris_common::controller::TetrisController as Controller;
 use tetris_common::command::TetrisCommand as Command;
-
-use super::R;
+use tetris_common::R;
 
 pub fn update(controller: &mut Controller) -> R {
 	while let Some(cmd) = controller.commands.pop_front() {

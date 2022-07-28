@@ -1,8 +1,9 @@
 extern crate tetris_common;
 use tetris_common::controller::TetrisController as Controller;
-use tetris_common::Tetris;
 use tetris_common::WINDOW_NAME;
 use tetris_common::GAME_FPS;
+use tetris_common::Tetris;
+use tetris_common::R;
 
 mod listener;
 mod renderer;
@@ -11,7 +12,6 @@ mod updater;
 use std::time::Duration;
 use std::thread;
 
-pub type R = Result<(), String>;
 
 fn main() -> R {
 	// initialize stuff
