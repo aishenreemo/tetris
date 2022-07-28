@@ -1,5 +1,8 @@
 extern crate tetris_common;
 use tetris_common::controller::TetrisController as Controller;
+use tetris_common::Tetris;
+use tetris_common::WINDOW_NAME;
+use tetris_common::GAME_FPS;
 
 mod listener;
 mod renderer;
@@ -10,24 +13,21 @@ use std::thread;
 
 pub type R = Result<(), String>;
 
-const WINDOW_NAME: &str = "tetris";
-const WINDOW_DEFAULT_WIDTH: u32 = 800;
-const WINDOW_DEFAULT_HEIGHT: u32 = 800;
-
-const GAME_FPS: u64 = 30;
-
 fn main() -> R {
 	// initialize stuff
 	let sdl_context = sdl2::init()?;
 	let video_subsystem = sdl_context.video()?;
 
+	let game = Tetris::default();
+
 	let window = video_subsystem
-		.window(WINDOW_NAME, WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT)
+		.window(WINDOW_NAME, game.cfg.window_size.0, game.cfg.window_size.1)
 		.position_centered()
 		.resizable()
 		.opengl()
 		.build()
 		.map_err(|e| e.to_string())?;
+
 
 	// create canvas
 	let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
@@ -47,7 +47,7 @@ fn main() -> R {
 		updater::update(&mut controller)?;
 
 		// render game
-		renderer::render(&mut canvas)?;
+		renderer::render(&game, &mut canvas)?;
 
 		// sleep for (1s / FPS)
 		thread::sleep(Duration::from_nanos(1_000_000_000 / GAME_FPS));
