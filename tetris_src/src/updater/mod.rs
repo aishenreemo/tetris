@@ -5,16 +5,16 @@ use tetris_common::command::TetrisCommand as Command;
 use super::R;
 
 pub fn update(controller: &mut Controller) -> R {
-    while let Some(cmd) = controller.commands.pop_front() {
-        match cmd {
-            Command::Quit { timestamp } => quit(timestamp),
-        }
-    }
+	while let Some(cmd) = controller.commands.pop_front() {
+		match cmd {
+			Command::Quit { timestamp } => quit(timestamp),
+		}
+	}
 
-    Ok(())
+	Ok(())
 }
 
 fn quit(timestamp: u32) {
-    println!("Exited the game after {timestamp}");
-    std::process::exit(0);
+	println!("Exited the game after {timestamp}");
+	std::process::exit(0);
 }

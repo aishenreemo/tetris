@@ -3,3 +3,8 @@ name = "tetris-common"
 version = "0.1.0"
 edition = "2021"
 authors = ["aishen <aish3n@pm.me>"]
+
+[dependencies.sdl2]
+version = "0.35.2"
+default-features = false
+features = ["ttf", "image"]

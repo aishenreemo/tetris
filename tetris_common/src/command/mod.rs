@@ -1,3 +1,3 @@
 pub enum TetrisCommand {
-    Quit { timestamp: u32 },
+	Quit { timestamp: u32 },
 }

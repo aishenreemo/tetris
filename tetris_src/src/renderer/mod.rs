@@ -5,9 +5,9 @@ use sdl2::pixels::Color;
 use super::R;
 
 pub fn render(canvas: &mut WindowCanvas) -> R {
-    canvas.set_draw_color(Color::BLACK);
-    canvas.clear();
-    canvas.present();
+	canvas.set_draw_color(Color::BLACK);
+	canvas.clear();
+	canvas.present();
 
-    Ok(())
+	Ok(())
 }
