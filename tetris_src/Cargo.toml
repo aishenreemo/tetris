@@ -1,0 +1,20 @@
+[package]
+name = "tetris"
+version = "0.1.0"
+edition = "2021"
+authors = ["aishen <aish3n@pm.me>"]
+
+[dependencies]
+rand = "*"
+
+[dependencies.tetris-common]
+path = "../tetris_common"
+
+[dependencies.sdl2]
+version = "0.35.2"
+default-features = false
+features = ["ttf", "image"]
+
+[[bin]]
+name = "tetris"
+path = "src/main.rs"

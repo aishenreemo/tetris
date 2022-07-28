@@ -102,7 +102,12 @@ version = "0.1.0"
 dependencies = [
  "rand",
  "sdl2",
+ "tetris-common",
 ]
+
+[[package]]
+name = "tetris-common"
+version = "0.1.0"
 
 [[package]]
 name = "version-compare"
