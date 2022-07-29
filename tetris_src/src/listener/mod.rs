@@ -1,6 +1,7 @@
 extern crate sdl2;
 use sdl2::keyboard::Keycode;
 use sdl2::keyboard::Mod;
+use sdl2::event::WindowEvent;
 use sdl2::event::Event;
 use sdl2::EventPump;
 
@@ -48,6 +49,14 @@ fn handle_event(event: Event, controller: &mut Controller) {
 			..
 		} => {
 			controller.key_release(keycode);
+		},
+
+		// if you resize the window
+		Event::Window {
+			win_event: WindowEvent::Resized(_, _) | WindowEvent::SizeChanged(_, _),
+			..
+		} => {
+			controller.commands.push_back(Command::UpdateScale);
 		},
 
 		_ => (),

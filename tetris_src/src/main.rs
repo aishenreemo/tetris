@@ -12,13 +12,12 @@ mod updater;
 use std::time::Duration;
 use std::thread;
 
-
 fn main() -> R {
 	// initialize stuff
 	let sdl_context = sdl2::init()?;
 	let video_subsystem = sdl_context.video()?;
 
-	let game = Tetris::default();
+	let mut game = Tetris::default();
 
 	let window = video_subsystem
 		.window(WINDOW_NAME, game.cfg.window_size.0, game.cfg.window_size.1)
@@ -27,7 +26,6 @@ fn main() -> R {
 		.opengl()
 		.build()
 		.map_err(|e| e.to_string())?;
-
 
 	// create canvas
 	let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
@@ -44,7 +42,7 @@ fn main() -> R {
 		listener::listen(&mut event_pump, &mut controller);
 
 		// update game struct
-		updater::update(&mut controller)?;
+		updater::update(&mut game, &mut controller, &canvas)?;
 
 		// render game
 		renderer::render(&game, &mut canvas)?;

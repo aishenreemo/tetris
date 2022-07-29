@@ -1,3 +1,4 @@
+extern crate sdl2;
 use sdl2::render::WindowCanvas;
 use sdl2::pixels::Color;
 use sdl2::rect::Rect;
@@ -8,6 +9,7 @@ use super::R;
 
 pub trait Layout {
 	fn render(&self, game: &Tetris, canvas: &mut WindowCanvas) -> R;
+	fn update_scale(&mut self, game: &Tetris);
 }
 
 pub struct TetrisLayout {
@@ -21,9 +23,9 @@ impl TetrisLayout {
 		let pwidth = |percentage: f32| window_width as f32 * percentage;
 		let pheight = |percentage: f32| window_height as f32 * percentage;
 
-		let game_width = pwidth(0.5);
-		let game_height = pheight(0.7);
-		let game_center = (pwidth(0.3) as i32, pheight(0.4) as i32);
+		let game_width = clamp(pwidth(0.5), 275.0, 400.0);
+		let game_height = clamp(pheight(0.7), 400.0, 500.0);
+		let game_center = (pwidth(0.375) as i32, pheight(0.5) as i32);
 		let game_size = (game_width as u32, game_height as u32);
 		let main = Rect::from_center(game_center, game_size.0, game_size.1);
 
@@ -42,5 +44,24 @@ impl Layout for TetrisLayout {
 		canvas.present();
 
 		Ok(())
+	}
+
+	fn update_scale(&mut self, game: &Tetris) {
+		let (window_width, window_height) = game.cfg.window_size;
+		let pwidth = |percentage: f32| window_width as f32 * percentage;
+		let pheight = |percentage: f32| window_height as f32 * percentage;
+
+		self.main.set_width(clamp(pwidth(0.5), 200.0, 300.0) as u32);
+		self.main.set_height(clamp(pheight(0.7), 400.0, 575.0) as u32);
+		self.main.center_on((pwidth(0.3) as i32, pheight(0.5) as i32));
+	}
+}
+
+fn clamp<T: PartialOrd + std::fmt::Debug>(input: T, min: T, max: T) -> T {
+	match (input, min, max) {
+		(_, b, c) if b >= c => panic!("min must be less than max."),
+		(a, b, _) if a < b => b,
+		(a, _, c) if a > c => c,
+		(a, _, _) => a,
 	}
 }

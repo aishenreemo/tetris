@@ -1,3 +1,6 @@
+extern crate sdl2;
+use sdl2::render::WindowCanvas;
+
 pub mod controller;
 pub mod command;
 
@@ -13,8 +16,8 @@ pub type R = Result<(), String>;
 pub const COLUMNS: usize = 10;
 pub const ROWS: usize = 20;
 pub const WINDOW_NAME: &str = "tetris";
-pub const WINDOW_DEFAULT_WIDTH: u32 = 600;
-pub const WINDOW_DEFAULT_HEIGHT: u32 = 800;
+pub const WINDOW_DEFAULT_WIDTH: u32 = 400;
+pub const WINDOW_DEFAULT_HEIGHT: u32 = 600;
 pub const DEFAULT_SPEED: u64 = 200;
 pub const GAME_FPS: u64 = 30;
 
@@ -31,6 +34,15 @@ impl Default for Tetris {
 			layout: Box::new(RefCell::new(TetrisLayout::new(&cfg))),
 			cfg,
 		}
+	}
+}
+
+impl Tetris {
+	pub fn update_scale(&mut self, canvas: &WindowCanvas) -> R {
+		self.cfg.window_size = canvas.output_size()?;
+		self.layout.borrow_mut().update_scale(self);
+
+		Ok(())
 	}
 }
 
