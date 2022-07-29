@@ -6,5 +6,5 @@ extern crate sdl2;
 use sdl2::render::WindowCanvas;
 
 pub fn render(game: &Tetris, canvas: &mut WindowCanvas) -> R {
-	game.layout.borrow().render(game, canvas)
+    game.layout.borrow().render(game, canvas)
 }

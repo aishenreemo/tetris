@@ -8,17 +8,17 @@ extern crate sdl2;
 use sdl2::render::WindowCanvas;
 
 pub fn update(game: &mut Tetris, controller: &mut Controller, canvas: &WindowCanvas) -> R {
-	while let Some(cmd) = controller.commands.pop_front() {
-		match cmd {
-			Command::Quit { timestamp } => quit(timestamp),
-			Command::UpdateScale => game.update_scale(canvas)?,
-		}
-	}
+    while let Some(cmd) = controller.commands.pop_front() {
+        match cmd {
+            Command::Quit { timestamp } => quit(timestamp),
+            Command::UpdateScale => game.update_scale(canvas)?,
+        }
+    }
 
-	Ok(())
+    Ok(())
 }
 
 fn quit(timestamp: u32) {
-	println!("Exited the game after {}s", timestamp / 1000);
-	std::process::exit(0);
+    println!("Exited the game after {}s", timestamp / 1000);
+    std::process::exit(0);
 }

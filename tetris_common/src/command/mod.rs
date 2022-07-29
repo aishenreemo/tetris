@@ -1,4 +1,4 @@
 pub enum TetrisCommand {
-	Quit { timestamp: u32 },
-	UpdateScale,
+    Quit { timestamp: u32 },
+    UpdateScale,
 }

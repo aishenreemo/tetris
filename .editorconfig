@@ -12,6 +12,6 @@ insert_final_newline = true
 # Set default charset
 [*.rs]
 charset = utf-8
-indent_style = tab
-indent_size = 8
-tab_width = 8
+indent_style = space
+indent_size = 4
+tab_width = 4

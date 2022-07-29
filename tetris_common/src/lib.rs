@@ -22,40 +22,40 @@ pub const DEFAULT_SPEED: u64 = 200;
 pub const GAME_FPS: u64 = 30;
 
 pub struct Tetris {
-	pub layout: Box<RefCell<dyn Layout>>,
-	pub cfg: Settings,
+    pub layout: Box<RefCell<dyn Layout>>,
+    pub cfg: Settings,
 }
 
 impl Default for Tetris {
-	fn default() -> Self {
-		let cfg = Settings::default();
+    fn default() -> Self {
+        let cfg = Settings::default();
 
-		Tetris {
-			layout: Box::new(RefCell::new(TetrisLayout::new(&cfg))),
-			cfg,
-		}
-	}
+        Tetris {
+            layout: Box::new(RefCell::new(TetrisLayout::new(&cfg))),
+            cfg,
+        }
+    }
 }
 
 impl Tetris {
-	pub fn update_scale(&mut self, canvas: &WindowCanvas) -> R {
-		self.cfg.window_size = canvas.output_size()?;
-		self.layout.borrow_mut().update_scale(self);
+    pub fn update_scale(&mut self, canvas: &WindowCanvas) -> R {
+        self.cfg.window_size = canvas.output_size()?;
+        self.layout.borrow_mut().update_scale(self);
 
-		Ok(())
-	}
+        Ok(())
+    }
 }
 
 pub struct Settings {
-	pub window_size: (u32, u32),
-	pub speed: Duration,
+    pub window_size: (u32, u32),
+    pub speed: Duration,
 }
 
 impl Default for Settings {
-	fn default() -> Self {
-		Self {
-			window_size: (WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT),
-			speed: Duration::from_millis(DEFAULT_SPEED),
-		}
-	}
+    fn default() -> Self {
+        Self {
+            window_size: (WINDOW_DEFAULT_WIDTH, WINDOW_DEFAULT_HEIGHT),
+            speed: Duration::from_millis(DEFAULT_SPEED),
+        }
+    }
 }
